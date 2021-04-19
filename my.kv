@@ -83,9 +83,52 @@ WindowManager:
 
 <ThirdWindow>:
     name: "third"
+    user_exists_label: userExists
 
-    Button:
-        text: "Go Back"
-        on_release:
-            app.root.current = "main"
-            root.manager.transition.direction = "right"
+    BoxLayout:
+        orientation: 'vertical'
+
+        BoxLayout:
+            orientation: 'horizontal'
+
+            MyLabel:
+                text: "Name: "
+
+            AnchorLayout:
+                anchor_x: 'left'
+                TextInput:
+                    id: name
+                    multiline: False
+                    size_hint: 0.9, 0.25
+
+        BoxLayout:
+            orientation: 'horizontal'
+
+            MyLabel:
+                text: "Password: "
+
+            AnchorLayout:
+                anchor_x: 'left'
+                TextInput:
+                    id: passw
+                    multiline: False
+                    size_hint: 0.9, 0.25
+
+        MyLabel:
+            id: userExists
+            text: ""
+
+        BoxLayout:
+            orientation: 'horizontal'
+            Button:
+                text: "Go Back"
+                on_release:
+                    app.root.current = "main"
+                    root.manager.transition.direction = "right"
+
+            Button:
+                text: "Submit"
+
+                on_release:
+                    if root.save_user(name.text, passw.text) == True: app.root.current = "second"
+                    else: root.user_exists_error()

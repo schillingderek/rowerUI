@@ -17,9 +17,9 @@ import configparser
 import base64
 from kivy.core.text import LabelBase
 
-
 config = configparser.RawConfigParser()
 config.read('props.properties')
+
 
 class MainWindow(Screen):
     def db_connector(self):
@@ -45,7 +45,7 @@ class MainWindow(Screen):
         return with_connection_
 
     @db_connector
-    def get_users(cnn):
+    def get_users(cnn) -> list:
         cur = cnn.cursor(buffered=True)
         users = Table('users', schema='kivy_test_db')
         q = MySQLQuery.from_(users).select(users.name)
@@ -55,7 +55,7 @@ class MainWindow(Screen):
         return res
 
     @db_connector
-    def check_password(cnn, self, user, passw):
+    def check_password(cnn, self, user: str, passw: str) -> str:
         cur = cnn.cursor(buffered=True)
         users = Table('users', schema='kivy_test_db')
         q = MySQLQuery.from_(users).select(
@@ -75,25 +75,73 @@ class MainWindow(Screen):
 class SecondWindow(Screen):
     pass
 
+
 class ThirdWindow(Screen):
-    pass
+    def db_connector(self):
+        def with_connection_(*args, **kwargs):
+            host = config.get('DatabaseSection', 'database.host')
+            user = config.get('DatabaseSection', 'database.user')
+            password = config.get('DatabaseSection', 'database.password')
+            auth = config.get('DatabaseSection', 'database.authPlugin')
+
+            cnn = mysql.connect(host=host, user=user, passwd=password,
+                                auth_plugin=auth)
+            try:
+                rv = self(cnn, *args, **kwargs)
+            except Exception:
+                cnn.rollback()
+                raise
+            else:
+                cnn.commit()
+            finally:
+                cnn.close()
+            return rv
+
+        return with_connection_
+
+    @db_connector
+    def save_user(cnn, self, user: str, passw: str) -> bool:
+        cur = cnn.cursor(buffered=True)
+        users = Table('users', schema='kivy_test_db')
+        user_query = MySQLQuery.from_(users).select(
+            users.star
+        ).where(
+            users.name == user
+        )
+        cur.execute(user_query.get_sql())
+        res = cur.fetchall()
+        if len(res) == 1:
+            return False
+
+        insert_query = MySQLQuery.into(users) \
+            .columns('name', 'password') \
+            .insert(user, self.string_to_base_64_string(passw))
+        cur.execute(insert_query.get_sql())
+
+        return True
+
+    def string_to_base_64_string(self, string) -> str:
+        return base64.b64encode(string.encode('ascii')).decode('ascii')
+
+    def user_exists_error(self):
+        self.user_exists_label.text = "User already exists"
 
 
 class WindowManager(ScreenManager):
     pass
 
+
 kv = Builder.load_file("my.kv")
 
 
 class MyMainApp(App):
-    LabelBase.register(name='Retro',
-                       fn_regular='fonts/retro_computer_personal_use.ttf')
 
     def build(self):
         return kv
 
-    def do_login(self, passw):
+    def do_login(self, passw: str) -> str:
         return "second" if passw == "hello" else "main"
+
 
 if __name__ == "__main__":
     MyMainApp().run()
