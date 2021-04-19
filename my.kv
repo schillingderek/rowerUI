@@ -74,12 +74,20 @@ WindowManager:
 
 <SecondWindow>:
     name: "second"
+    counter_label: counter
 
-    Button:
-        text: "Go Back"
-        on_release:
-            app.root.current = "main"
-            root.manager.transition.direction = "right"
+    BoxLayout:
+        orientation: 'vertical'
+
+        Button:
+            text: "Go Back"
+            on_release:
+                app.root.current = "main"
+                root.manager.transition.direction = "right"
+
+        MyLabel:
+            id: counter
+            text: '0'
 
 <ThirdWindow>:
     name: "third"

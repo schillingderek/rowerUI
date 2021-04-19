@@ -1,3 +1,4 @@
+from kivy.clock import Clock
 from kivy.config import Config
 
 Config.set('kivy', 'keyboard_mode', 'systemanddock')
@@ -16,6 +17,7 @@ from pypika import MySQLQuery, Table, Field
 import configparser
 import base64
 from kivy.core.text import LabelBase
+from math import ceil
 
 config = configparser.RawConfigParser()
 config.read('props.properties')
@@ -73,7 +75,12 @@ class MainWindow(Screen):
 
 
 class SecondWindow(Screen):
-    pass
+    def __init__(self, **kwargs):
+        super(SecondWindow, self).__init__(**kwargs)
+        Clock.schedule_interval(self.update_stats, 0.5)
+
+    def update_stats(self, interval):
+        self.counter_label.text = str(ceil(int(self.counter_label.text) + interval))
 
 
 class ThirdWindow(Screen):
