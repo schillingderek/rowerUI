@@ -15,6 +15,8 @@ from kivy.core.window import Window
 from pypika import MySQLQuery, Table, Field
 import configparser
 import base64
+from kivy.core.text import LabelBase
+
 
 config = configparser.RawConfigParser()
 config.read('props.properties')
@@ -84,6 +86,9 @@ kv = Builder.load_file("my.kv")
 
 
 class MyMainApp(App):
+    LabelBase.register(name='Retro',
+                       fn_regular='fonts/retro_computer_personal_use.ttf')
+
     def build(self):
         return kv
 

@@ -3,46 +3,70 @@ WindowManager:
     SecondWindow:
     ThirdWindow:
 
+[MyLabel@Label]:
+    text: ctx.text if hasattr(ctx, 'text') else ''
+    color: 1,1,1,1
+    markup: True
+    size_hint: 0.5, 0.25
+    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+    canvas.before:
+        Color:
+            rgba: 1, 0, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
 <MainWindow>:
     name: "main"
 
     GridLayout:
         cols: 1
 
-        GridLayout:
-            rows: 2
-            cols: 2
+        BoxLayout:
+            orientation: 'vertical'
 
-            Label:
-                text: "User: "
+            BoxLayout:
+                orientation: 'horizontal'
+                MyLabel:
+                    text: "User: "
 
-            GridLayout:
-                cols: 2
+                BoxLayout:
+                    orientation: 'horizontal'
 
-                FloatLayout:
-                    Spinner:
-                        id: spin
-                        size_hint: None, None
-                        size: 100, 44
-                        pos_hint: {'center': (.5, .5)}
-                        text: root.users_formatted[0]
-                        values: root.users_formatted
-                        on_text:
-                            print("The spinner {} has text {}".format(self, self.text))
+                    AnchorLayout:
+                        anchor_x: 'left'
+                        AnchorLayout:
+                            Spinner:
+                                id: spin
+                                size_hint: .8, .25
+                                pos_hint: {'center': (.5, .5)}
+                                text: root.users_formatted[0]
+                                values: root.users_formatted
+                                on_text:
+                                    print("The spinner {} has text {}".format(self, self.text))
 
-                Button:
-                    text: "New User"
-                    on_release:
-                        app.root.current = "third"
-
-            Label:
+                    Button:
+                        text: "New User"
+                        font_size: 16
+                        size_hint: (0.5, 0.25)
+                        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                        on_release:
+                            app.root.current = "third"
+        BoxLayout:
+            orientation: 'horizontal'
+            MyLabel:
                 text: "Password: "
 
-            TextInput:
-                id: passw
-                multiline: False
+
+            AnchorLayout:
+                anchor_x: 'left'
+                TextInput:
+                    id: passw
+                    multiline: False
+                    size_hint: 0.9, 0.25
         Button:
             text: "Submit"
+            size_hint: 0.5, 0.25
             on_release:
                 app.root.current = root.check_password(spin.text, passw.text)
                 root.manager.transition.direction = "left"
