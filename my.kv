@@ -18,6 +18,7 @@ WindowManager:
 
 <MainWindow>:
     name: "main"
+    spinner_label: spin
 
     GridLayout:
         cols: 1
@@ -40,8 +41,6 @@ WindowManager:
                                 id: spin
                                 size_hint: .8, .25
                                 pos_hint: {'center': (.5, .5)}
-                                text: root.users_formatted[0]
-                                values: root.users_formatted
                                 on_text:
                                     print("The spinner {} has text {}".format(self, self.text))
 
@@ -87,7 +86,7 @@ WindowManager:
 
         MyLabel:
             id: counter
-            text: '0'
+            text: str(round(root.time))
 
 <ThirdWindow>:
     name: "third"

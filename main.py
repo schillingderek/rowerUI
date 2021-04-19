@@ -1,5 +1,6 @@
 from kivy.clock import Clock
 from kivy.config import Config
+from kivy.properties import NumericProperty
 
 Config.set('kivy', 'keyboard_mode', 'systemanddock')
 from kivy.app import App
@@ -24,6 +25,16 @@ config.read('props.properties')
 
 
 class MainWindow(Screen):
+    time = NumericProperty()
+
+    def __init__(self, **kwargs):
+        super(MainWindow, self).__init__(**kwargs)
+        Clock.schedule_interval(self.update_spinner, 1)
+
+    def update_spinner(self, interval):
+        self.spinner_label.values = self.get_users()
+        self.spinner_label.text = self.get_users()[0]
+
     def db_connector(self):
         def with_connection_(*args, **kwargs):
             host = config.get('DatabaseSection', 'database.host')
@@ -47,14 +58,15 @@ class MainWindow(Screen):
         return with_connection_
 
     @db_connector
-    def get_users(cnn) -> list:
+    def get_users(cnn, self) -> list:
         cur = cnn.cursor(buffered=True)
         users = Table('users', schema='kivy_test_db')
         q = MySQLQuery.from_(users).select(users.name)
         cur.execute(q.get_sql())
-        res = cur.fetchall()
+        users = cur.fetchall()
 
-        return res
+        return [x[0] for x in users]
+
 
     @db_connector
     def check_password(cnn, self, user: str, passw: str) -> str:
@@ -70,17 +82,19 @@ class MainWindow(Screen):
         provided_passw_encoded = base64.b64encode(passw.encode('ascii')).decode('ascii')
         return "second" if (provided_passw_encoded == res) else "main"
 
-    users = get_users()
-    users_formatted = [x[0] for x in users]
-
 
 class SecondWindow(Screen):
+
+    time = NumericProperty()
+
     def __init__(self, **kwargs):
         super(SecondWindow, self).__init__(**kwargs)
-        Clock.schedule_interval(self.update_stats, 0.5)
+        Clock.schedule_interval(self.update_stats, 0.1)
+
 
     def update_stats(self, interval):
-        self.counter_label.text = str(ceil(int(self.counter_label.text) + interval))
+        self.time += 0.1
+        self.counter_label.text = str(round(self.time))
 
 
 class ThirdWindow(Screen):
