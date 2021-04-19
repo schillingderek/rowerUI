@@ -1,0 +1,67 @@
+WindowManager:
+    MainWindow:
+    SecondWindow:
+    ThirdWindow:
+
+<MainWindow>:
+    name: "main"
+
+    GridLayout:
+        cols: 1
+
+        GridLayout:
+            rows: 2
+            cols: 2
+
+            Label:
+                text: "User: "
+
+            GridLayout:
+                cols: 2
+
+                FloatLayout:
+                    Spinner:
+                        id: spin
+                        size_hint: None, None
+                        size: 100, 44
+                        pos_hint: {'center': (.5, .5)}
+                        text: root.users_formatted[0]
+                        values: root.users_formatted
+                        on_text:
+                            print("The spinner {} has text {}".format(self, self.text))
+
+                Button:
+                    text: "New User"
+                    on_release:
+                        app.root.current = "third"
+
+            Label:
+                text: "Password: "
+
+            TextInput:
+                id: passw
+                multiline: False
+        Button:
+            text: "Submit"
+            on_release:
+                app.root.current = root.check_password(spin.text, passw.text)
+                root.manager.transition.direction = "left"
+
+
+<SecondWindow>:
+    name: "second"
+
+    Button:
+        text: "Go Back"
+        on_release:
+            app.root.current = "main"
+            root.manager.transition.direction = "right"
+
+<ThirdWindow>:
+    name: "third"
+
+    Button:
+        text: "Go Back"
+        on_release:
+            app.root.current = "main"
+            root.manager.transition.direction = "right"
