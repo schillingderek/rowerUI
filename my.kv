@@ -1,67 +1,168 @@
 WindowManager:
-    MainWindow:
-    SecondWindow:
-    ThirdWindow:
+    LoginWindow:
+    MainPage:
+    NewUser:
 
-<MainWindow>:
-    name: "main"
+[MyLabel@Label]:
+    text: ctx.text if hasattr(ctx, 'text') else ''
+    color: (1,1,1,1)
+    markup: True
+    canvas.before:
+        Color:
+            rgba: (0.4, 0.6, 0.8 , 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
-    GridLayout:
-        cols: 1
+<LoginWindow>:
+    name: "login"
+    spinner_label: spin
 
-        GridLayout:
-            rows: 2
-            cols: 2
+    BoxLayout:
+        orientation: 'vertical'
 
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: (1, 0.25)
+
+            AnchorLayout:
+                size_hint: (0.25, 0.75)
+                anchor_x: 'left'
+                MyLabel:
+                    text: "User: "
+
+            AnchorLayout:
+                size_hint: (0.75, 0.75)
+                padding: 10, 0, 0, 0
+                anchor_x: 'left'
+                Spinner:
+                    id: spin
+                    background_color: (0.4, 0.6, 0.8 , 1)
+                    text: "Select from Dropdown"
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: (1, 0.25)
+
+            AnchorLayout:
+                size_hint: (0.25, 0.75)
+                anchor_x: 'left'
+                MyLabel:
+                    text: "Password: "
+
+
+            AnchorLayout:
+                size_hint: (0.75, 0.75)
+                padding: 10, 0, 0, 0
+                anchor_x: 'left'
+                TextInput:
+                    id: passw
+                    multiline: False
+
+        AnchorLayout:
+            size_hint: (1, 0.1)
             Label:
-                text: "User: "
+                id: wrongPassword
+                text: ""
 
-            GridLayout:
-                cols: 2
+        AnchorLayout:
+            size_hint: (1, 0.2)
+            Button:
+                text: "Submit"
+                size_hint: (0.75, 0.75)
+                on_release:
+                    wrongPassword.text = "You've entered the wrong password" if root.check_password(spin.text, passw.text) == False else ""
+                    app.root.current = "mainpage" if root.check_password(spin.text, passw.text) == True else "login"
+                    passw.text = ""
+                    root.manager.transition.direction = "left"
 
-                FloatLayout:
-                    Spinner:
-                        id: spin
-                        size_hint: None, None
-                        size: 100, 44
-                        pos_hint: {'center': (.5, .5)}
-                        text: root.users_formatted[0]
-                        values: root.users_formatted
-                        on_text:
-                            print("The spinner {} has text {}".format(self, self.text))
+        AnchorLayout:
+            size_hint: (1, 0.2)
+            Button:
+                text: "New User"
+                size_hint: (0.75, 0.75)
+                pos_hint: {'center': (.5, .5)}
+                on_release:
+                    passw.text = ""
+                    wrongPassword.text = ""
+                    app.root.current = "newuser"
 
-                Button:
-                    text: "New User"
-                    on_release:
-                        app.root.current = "third"
+<MainPage>:
+    name: "mainpage"
+    counter_label: counter
 
-            Label:
-                text: "Password: "
+    BoxLayout:
+        orientation: 'vertical'
 
-            TextInput:
-                id: passw
-                multiline: False
         Button:
-            text: "Submit"
+            text: "Go Back"
             on_release:
-                app.root.current = root.check_password(spin.text, passw.text)
-                root.manager.transition.direction = "left"
+                app.root.current = "login"
+                root.manager.transition.direction = "right"
+
+        MyLabel:
+            id: counter
+            text: str(round(root.speed))
+
+<NewUser>:
+    name: "newuser"
+    user_exists_label: userExists
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        BoxLayout:
+            orientation: 'horizontal'
+
+            AnchorLayout:
+                size_hint: (0.25, 0.75)
+                anchor_x: 'left'
+                MyLabel:
+                    text: "Name: "
 
 
-<SecondWindow>:
-    name: "second"
+            AnchorLayout:
+                size_hint: (0.75, 0.75)
+                padding: 10, 0, 0, 0
+                anchor_x: 'left'
+                TextInput:
+                    id: name
+                    multiline: False
 
-    Button:
-        text: "Go Back"
-        on_release:
-            app.root.current = "main"
-            root.manager.transition.direction = "right"
+        BoxLayout:
+            orientation: 'horizontal'
 
-<ThirdWindow>:
-    name: "third"
+            AnchorLayout:
+                size_hint: (0.25, 0.75)
+                anchor_x: 'left'
+                MyLabel:
+                    text: "Password: "
 
-    Button:
-        text: "Go Back"
-        on_release:
-            app.root.current = "main"
-            root.manager.transition.direction = "right"
+
+            AnchorLayout:
+                size_hint: (0.75, 0.75)
+                padding: 10, 0, 0, 0
+                anchor_x: 'left'
+                TextInput:
+                    id: passw
+                    multiline: False
+
+        AnchorLayout:
+            Label:
+                id: userExists
+                text: ""
+
+        BoxLayout:
+            orientation: 'horizontal'
+            Button:
+                text: "Go Back"
+                on_release:
+                    app.root.current = "login"
+                    root.manager.transition.direction = "right"
+
+            Button:
+                text: "Submit"
+
+                on_release:
+                    if root.save_user(name.text, passw.text) == True: app.root.current = "mainpage"
+                    else: root.user_exists_error()
