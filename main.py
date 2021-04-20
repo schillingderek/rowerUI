@@ -1,14 +1,18 @@
 from kivy.clock import Clock
 from kivy.config import Config
 from kivy.properties import NumericProperty
+
 from db_connector import DbConnector
+
 Config.set('kivy', 'keyboard_mode', 'systemanddock')
 from kivy.lang import Builder
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.app import App
-from pypika import MySQLQuery, Table, Field
+from pypika import MySQLQuery, Table, Field, Interval
+from pypika import functions as fn
 import configparser
 import base64
+import math
 
 config = configparser.RawConfigParser()
 config.read('props.properties')
@@ -35,7 +39,7 @@ class LoginWindow(Screen):
         return [x[0] for x in users]
 
     @DbConnector.db_connector
-    def check_password(cnn, self, user: str, passw: str) -> str:
+    def check_password(cnn, self, user: str, passw: str) -> bool:
         cur = cnn.cursor(buffered=True)
         users = Table('users', schema='kivy_test_db')
         q = MySQLQuery.from_(users).select(
@@ -50,15 +54,39 @@ class LoginWindow(Screen):
 
 
 class MainPage(Screen):
-    time = NumericProperty()
+    speed = NumericProperty()
 
     def __init__(self, **kwargs):
         super(MainPage, self).__init__(**kwargs)
-        Clock.schedule_interval(self.update_stats, 0.1)
+        Clock.schedule_interval(self.check_for_data, 0.1)
 
-    def update_stats(self, interval):
-        self.time += 0.1
-        self.counter_label.text = str(round(self.time))
+    # def update_stats(self, interval):
+    #     self.time += 0.1
+    #     self.counter_label.text = str(round(self.time))
+
+    @DbConnector.db_connector
+    def get_data(cnn, self):
+        cur = cnn.cursor(buffered=True)
+        raw_data = Table('raw_data', schema='kivy_test_db')
+        data_query = MySQLQuery.from_(raw_data).select(
+            raw_data.star
+        ).where(
+            raw_data.timestamp[fn.Now() - Interval(seconds=2):fn.Now()]
+        )
+        cur.execute(data_query.get_sql())
+        res = cur.fetchall()
+        return res
+
+    def check_for_data(self, interval):
+        res = self.get_data()
+        if len(res) > 0:
+            wheel_diameter = 27
+            wheel_circ = math.pi * wheel_diameter
+            rpm = (len(res) / 2.0) * 60
+            mph = rpm * (wheel_circ / 12 / 5280) * 60
+            self.speed = mph
+            self.counter_label.text = str(round(self.speed))
+            # self.counter_label.text = str(round(self.speed))
 
 
 class NewUser(Screen):

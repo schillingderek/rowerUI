@@ -60,20 +60,31 @@ WindowManager:
                     multiline: False
 
         AnchorLayout:
-            size_hint: (1, 0.25)
+            size_hint: (1, 0.1)
+            Label:
+                id: wrongPassword
+                text: ""
+
+        AnchorLayout:
+            size_hint: (1, 0.2)
             Button:
                 text: "Submit"
                 size_hint: (0.75, 0.75)
                 on_release:
+                    wrongPassword.text = "You've entered the wrong password" if root.check_password(spin.text, passw.text) == False else ""
                     app.root.current = "mainpage" if root.check_password(spin.text, passw.text) == True else "login"
+                    passw.text = ""
                     root.manager.transition.direction = "left"
+
         AnchorLayout:
-            size_hint: (1, 0.25)
+            size_hint: (1, 0.2)
             Button:
                 text: "New User"
                 size_hint: (0.75, 0.75)
                 pos_hint: {'center': (.5, .5)}
                 on_release:
+                    passw.text = ""
+                    wrongPassword.text = ""
                     app.root.current = "newuser"
 
 <MainPage>:
@@ -91,7 +102,7 @@ WindowManager:
 
         MyLabel:
             id: counter
-            text: str(round(root.time))
+            text: str(round(root.speed))
 
 <NewUser>:
     name: "newuser"
