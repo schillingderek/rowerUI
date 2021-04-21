@@ -39,7 +39,7 @@ class LoginWindow(Screen):
 
 class MainPage(Screen):
     total_time = StringProperty()
-    insta_min_per_500m = StringProperty()
+    insta_time_per_500m = StringProperty()
 
     def __init__(self, **kwargs):
         super(MainPage, self).__init__(**kwargs)
@@ -49,7 +49,7 @@ class MainPage(Screen):
         DbConnector.reset_raw_data(self)
 
     def update_workout_data(self, _):
-        all_data = sorted(DbConnector.get_all_workout_data(self))
+        all_data = sorted(DbConnector.get_all_raw_data(self))
         if len(all_data) > 0:
             workout_seconds = (datetime.datetime.now() - all_data[0][0]).seconds
             h_m_s = str(datetime.timedelta(seconds=workout_seconds))
@@ -60,12 +60,12 @@ class MainPage(Screen):
 
         instantaneous_data = DbConnector.get_insta_data(self)
         if len(instantaneous_data) > 1:
-            (mph, seconds_per_500m) = Utils.calc_insta_values(self, instantaneous_data)
+            seconds_per_500m = Utils.calc_insta_values(self, instantaneous_data)
             self.insta_min_per_500m = str(datetime.timedelta(seconds=seconds_per_500m)).split(".")[0]
         else:  # Only 1 data point in 5 seconds is long enough to assume nothing is moving
-            self.insta_min_per_500m = "0:00:00"
+            self.insta_time_per_500m = "0:00:00"
 
-        self.insta_min_per_500m_label.text = self.insta_min_per_500m
+        self.insta_time_per_500m_label.text = self.insta_time_per_500m
 
 
 class NewUser(Screen):

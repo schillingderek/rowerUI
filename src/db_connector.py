@@ -74,7 +74,7 @@ class DbConnector:
         return res
 
     @db_connector
-    def get_all_workout_data(cnn, self):
+    def get_all_raw_data(cnn, self):
         cur = cnn.cursor(buffered=True)
         data_query = MySQLQuery.from_(raw_data_table).select(
             raw_data_table.timestamp
