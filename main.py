@@ -29,15 +29,8 @@ class LoginWindow(Screen):
     def update_spinner(self, interval):
         self.spinner_label.values = self.get_users()
 
-    @DbConnector.db_connector
-    def get_users(cnn, self) -> list:
-        cur = cnn.cursor(buffered=True)
-        users = Table('users', schema='kivy_test_db')
-        q = MySQLQuery.from_(users).select(users.name)
-        cur.execute(q.get_sql())
-        users = cur.fetchall()
-
-        return [x[0] for x in users]
+    def get_users(self) -> list:
+        return DbConnector.get_users(self)
 
     def check_password(self, user: str, passw: str) -> bool:
         if user == "Select from Dropdown":
@@ -46,6 +39,7 @@ class LoginWindow(Screen):
         provided_passw_encoded = base64.b64encode(passw.encode('ascii')).decode('ascii')
         return True if (provided_passw_encoded == correct_password) else False
 
+
 class MainPage(Screen):
     insta_speed = NumericProperty()
     total_time = StringProperty()
@@ -53,38 +47,14 @@ class MainPage(Screen):
 
     def __init__(self, **kwargs):
         super(MainPage, self).__init__(**kwargs)
-        Clock.schedule_interval(self.update_workout_data, 0.1)
+        Clock.schedule_interval(self.update_workout_data, 0.5)
 
     def reset_run(self):
         DbConnector.reset_raw_data(self)
 
-    @DbConnector.db_connector
-    def get_insta_data(cnn, self):
-        cur = cnn.cursor(buffered=True)
-        raw_data = Table('raw_data', schema='kivy_test_db')
-        data_query = MySQLQuery.from_(raw_data).select(
-            raw_data.timestamp
-        ).where(
-            raw_data.timestamp[fn.Now() - Interval(seconds=5):fn.Now()]
-        )
-        cur.execute(data_query.get_sql())
-        res = cur.fetchall()
-        return res
-
-    @DbConnector.db_connector
-    def get_all_workout_data(cnn, self):
-        cur = cnn.cursor(buffered=True)
-        raw_data = Table('raw_data', schema='kivy_test_db')
-        data_query = MySQLQuery.from_(raw_data).select(
-            raw_data.timestamp
-        )
-        cur.execute(data_query.get_sql())
-        res = cur.fetchall()
-        return res
-
     def update_workout_data(self, interval):
-        all_data = sorted(self.get_all_workout_data())
-        if (len(all_data) > 0):
+        all_data = sorted(DbConnector.get_all_workout_data(self))
+        if len(all_data) > 0:
             workout_seconds = (datetime.datetime.now() - all_data[0][0]).seconds
             hms = str(datetime.timedelta(seconds=workout_seconds))
             self.total_time = hms
@@ -92,7 +62,7 @@ class MainPage(Screen):
             self.total_time = "0"
         self.total_time_label.text = self.total_time
 
-        instantaneous_data = self.get_insta_data()
+        instantaneous_data = DbConnector.get_insta_data(self)
         num_data_points = len(instantaneous_data)
         if num_data_points > 1:
             time_delta = instantaneous_data[-1][0] - instantaneous_data[0][0]
@@ -115,29 +85,11 @@ class MainPage(Screen):
 
 class NewUser(Screen):
 
-    @DbConnector.db_connector
-    def save_user(cnn, self, user: str, passw: str) -> bool:
-        cur = cnn.cursor(buffered=True)
-        users = Table('users', schema='kivy_test_db')
-        user_query = MySQLQuery.from_(users).select(
-            users.star
-        ).where(
-            users.name == user
-        )
-        cur.execute(user_query.get_sql())
-        res = cur.fetchall()
-        if len(res) == 1:
+    def save_user(self, user: str, passw: str) -> bool:
+        if DbConnector.user_exists(self, user):
             return False
 
-        insert_query = MySQLQuery.into(users) \
-            .columns('name', 'password') \
-            .insert(user, self.string_to_base_64_string(passw))
-        cur.execute(insert_query.get_sql())
-
-        return True
-
-    def string_to_base_64_string(self, string) -> str:
-        return base64.b64encode(string.encode('ascii')).decode('ascii')
+        return DbConnector.insert_user(self, user, passw)
 
     def user_exists_error(self):
         self.user_exists_label.text = "User already exists"

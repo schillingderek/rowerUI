@@ -95,24 +95,36 @@ WindowManager:
     BoxLayout:
         orientation: 'vertical'
 
-        Button:
-            text: "Go Back"
-            on_release:
-                app.root.current = "login"
-                root.manager.transition.direction = "right"
+        BoxLayout:
+            orientation: 'horizontal'
 
-        MyLabel:
-            id: insta_speed
-            text: "0"
+            MyLabel:
+                id: insta_speed
+                text: "0"
 
-        MyLabel:
-            id: total_time
-            text: "0"
+            Label:
+                text: "/500m"
+
+        BoxLayout:
+            orientation: 'horizontal'
+
+            MyLabel:
+                id: total_time
+                text: "0"
+
+            Label:
+                text: "Total Run Time"
 
         Button:
             text: "Reset Run"
             on_release:
                 root.reset_run()
+
+        Button:
+            text: "Go Back"
+            on_release:
+                app.root.current = "login"
+                root.manager.transition.direction = "right"
 
 
 <NewUser>:

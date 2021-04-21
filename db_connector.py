@@ -1,15 +1,19 @@
 import mysql.connector as mysql
-import configparser
-from kivy.clock import Clock
 from kivy.config import Config
+from pypika import functions as fn
+
+from utils import Utils
 
 Config.set('kivy', 'keyboard_mode', 'systemanddock')
 from pypika import MySQLQuery, Table, Field, Interval
 import configparser
-import base64
 
 config = configparser.RawConfigParser()
 config.read('props.properties')
+
+db_name = 'kivy_test_db'
+users_table = Table('users', schema=db_name)
+raw_data_table = Table('raw_data', schema=db_name)
 
 
 class DbConnector:
@@ -39,11 +43,10 @@ class DbConnector:
     @db_connector
     def get_password(cnn, self, user: str) -> (str, None):
         cur = cnn.cursor(buffered=True)
-        users = Table('users', schema='kivy_test_db')
-        q = MySQLQuery.from_(users).select(
-            users.password
+        q = MySQLQuery.from_(users_table).select(
+            users_table.password
         ).where(
-            users.name == user
+            users_table.name == user
         )
         cur.execute(q.get_sql())
         password = cur.fetchone()
@@ -55,6 +58,61 @@ class DbConnector:
     @db_connector
     def reset_raw_data(cnn, self):
         cur = cnn.cursor(buffered=True)
-        raw_data = Table('raw_data', schema='kivy_test_db')
-        q = MySQLQuery.from_(raw_data).delete()
+        q = MySQLQuery.from_(raw_data_table).delete()
         cur.execute(q.get_sql())
+
+    @db_connector
+    def get_insta_data(cnn, self):
+        cur = cnn.cursor(buffered=True)
+        data_query = MySQLQuery.from_(raw_data_table).select(
+            raw_data_table.timestamp
+        ).where(
+            raw_data_table.timestamp[fn.Now() - Interval(seconds=5):fn.Now()]
+        )
+        cur.execute(data_query.get_sql())
+        res = cur.fetchall()
+        return res
+
+    @db_connector
+    def get_all_workout_data(cnn, self):
+        cur = cnn.cursor(buffered=True)
+        data_query = MySQLQuery.from_(raw_data_table).select(
+            raw_data_table.timestamp
+        )
+        cur.execute(data_query.get_sql())
+        res = cur.fetchall()
+        return res
+
+    @db_connector
+    def user_exists(cnn, self, user: str) -> bool:
+        cur = cnn.cursor(buffered=True)
+        user_query = MySQLQuery.from_(users_table).select(
+            users_table.star
+        ).where(
+            users_table.name == user
+        )
+        cur.execute(user_query.get_sql())
+        res = cur.fetchall()
+        if len(res) > 0:
+            return True
+
+        return False
+
+    @db_connector
+    def insert_user(cnn, self, user: str, passw: str) -> bool:
+        cur = cnn.cursor(buffered=True)
+        insert_query = MySQLQuery.into(users_table) \
+            .columns('name', 'password') \
+            .insert(user, Utils.string_to_base_64_string(self, passw))
+        cur.execute(insert_query.get_sql())
+
+        return True
+
+    @db_connector
+    def get_users(cnn, self) -> list:
+        cur = cnn.cursor(buffered=True)
+        q = MySQLQuery.from_(users_table).select(users_table.name)
+        cur.execute(q.get_sql())
+        users = cur.fetchall()
+
+        return [x[0] for x in users]
