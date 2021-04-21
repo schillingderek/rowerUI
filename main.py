@@ -38,7 +38,6 @@ class LoginWindow(Screen):
 
 
 class MainPage(Screen):
-    insta_speed = NumericProperty()
     total_time = StringProperty()
     insta_min_per_500m = StringProperty()
 
@@ -63,11 +62,10 @@ class MainPage(Screen):
         if len(instantaneous_data) > 1:
             (mph, seconds_per_500m) = Utils.calc_insta_values(self, instantaneous_data)
             self.insta_min_per_500m = str(datetime.timedelta(seconds=seconds_per_500m)).split(".")[0]
-            self.insta_speed = mph
         else:  # Only 1 data point in 5 seconds is long enough to assume nothing is moving
-            self.insta_speed = 0.00
+            self.insta_min_per_500m = "0:00:00"
 
-        self.insta_speed_label.text = str(round(self.insta_speed, 2))
+        self.insta_min_per_500m_label.text = self.insta_min_per_500m
 
 
 class NewUser(Screen):

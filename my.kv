@@ -89,8 +89,8 @@ WindowManager:
 
 <MainPage>:
     name: "mainpage"
-    insta_speed_label: insta_speed
     total_time_label: total_time
+    insta_min_per_500m_label: insta_per_500m
 
     BoxLayout:
         orientation: 'vertical'
@@ -99,8 +99,8 @@ WindowManager:
             orientation: 'horizontal'
 
             MyLabel:
-                id: insta_speed
-                text: "0"
+                id: insta_per_500m
+                text: "0:00:00"
 
             Label:
                 text: "/500m"
