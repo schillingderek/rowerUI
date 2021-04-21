@@ -1,5 +1,12 @@
 import mysql.connector as mysql
 import configparser
+from kivy.clock import Clock
+from kivy.config import Config
+
+Config.set('kivy', 'keyboard_mode', 'systemanddock')
+from pypika import MySQLQuery, Table, Field, Interval
+import configparser
+import base64
 
 config = configparser.RawConfigParser()
 config.read('props.properties')
@@ -28,3 +35,26 @@ class DbConnector:
             return rv
 
         return with_connection_
+
+    @db_connector
+    def get_password(cnn, self, user: str) -> (str, None):
+        cur = cnn.cursor(buffered=True)
+        users = Table('users', schema='kivy_test_db')
+        q = MySQLQuery.from_(users).select(
+            users.password
+        ).where(
+            users.name == user
+        )
+        cur.execute(q.get_sql())
+        password = cur.fetchone()
+        if len(password) > 0:
+            return password[0]
+        else:
+            return None
+
+    @db_connector
+    def reset_raw_data(cnn, self):
+        cur = cnn.cursor(buffered=True)
+        raw_data = Table('raw_data', schema='kivy_test_db')
+        q = MySQLQuery.from_(raw_data).delete()
+        cur.execute(q.get_sql())

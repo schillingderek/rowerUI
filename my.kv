@@ -89,7 +89,8 @@ WindowManager:
 
 <MainPage>:
     name: "mainpage"
-    counter_label: counter
+    insta_speed_label: insta_speed
+    total_time_label: total_time
 
     BoxLayout:
         orientation: 'vertical'
@@ -101,8 +102,18 @@ WindowManager:
                 root.manager.transition.direction = "right"
 
         MyLabel:
-            id: counter
-            text: str(round(root.speed))
+            id: insta_speed
+            text: "0"
+
+        MyLabel:
+            id: total_time
+            text: "0"
+
+        Button:
+            text: "Reset Run"
+            on_release:
+                root.reset_run()
+
 
 <NewUser>:
     name: "newuser"
