@@ -3,6 +3,7 @@ from kivy.config import Config
 from kivy.properties import NumericProperty, StringProperty
 
 from db_connector import DbConnector
+from utils import Utils
 
 Config.set('kivy', 'keyboard_mode', 'systemanddock')
 from kivy.lang import Builder
@@ -36,7 +37,7 @@ class LoginWindow(Screen):
         if user == "Select from Dropdown":
             return False
         correct_password = DbConnector.get_password(self, user)
-        provided_passw_encoded = base64.b64encode(passw.encode('ascii')).decode('ascii')
+        provided_passw_encoded = Utils.string_to_base_64_string(passw)
         return True if (provided_passw_encoded == correct_password) else False
 
 
@@ -56,28 +57,18 @@ class MainPage(Screen):
         all_data = sorted(DbConnector.get_all_workout_data(self))
         if len(all_data) > 0:
             workout_seconds = (datetime.datetime.now() - all_data[0][0]).seconds
-            hms = str(datetime.timedelta(seconds=workout_seconds))
-            self.total_time = hms
+            h_m_s = str(datetime.timedelta(seconds=workout_seconds))
+            self.total_time = h_m_s
         else:
             self.total_time = "0"
         self.total_time_label.text = self.total_time
 
         instantaneous_data = DbConnector.get_insta_data(self)
-        num_data_points = len(instantaneous_data)
-        if num_data_points > 1:
-            time_delta = instantaneous_data[-1][0] - instantaneous_data[0][0]
-            time_delta_numeric = time_delta.seconds + time_delta.microseconds / 1000000.0
-            wheel_diameter = 27
-            wheel_circ_inches = math.pi * wheel_diameter
-            Hz = time_delta_numeric / (num_data_points - 1)
-            rpm = 60 / Hz
-            inch_per_hour = wheel_circ_inches * rpm * 60
-            mph = inch_per_hour / (12 * 5280)
-            seconds_per_500m = (1 / mph) / 1600 * 500 * 3600
+        if len(instantaneous_data) > 1:
+            (mph, seconds_per_500m) = Utils.calc_insta_values(self, instantaneous_data)
             self.insta_min_per_500m = str(datetime.timedelta(seconds=seconds_per_500m)).split(".")[0]
             self.insta_speed = mph
-            self.insta_speed_label.text = str(round(self.insta_speed, 2))
-        else:
+        else:  # Only 1 data point in 5 seconds is long enough to assume nothing is moving
             self.insta_speed = 0.00
 
         self.insta_speed_label.text = str(round(self.insta_speed, 2))
