@@ -1,5 +1,4 @@
 from kivy.config import Config
-Config.set('kivy', 'keyboard_mode', 'systemanddock')
 from kivy.clock import Clock
 from kivy.properties import NumericProperty, StringProperty
 from kivy.lang import Builder
@@ -10,6 +9,8 @@ from db_connector import DbConnector
 from utils import Utils
 import configparser
 import datetime
+
+Config.set('kivy', 'keyboard_mode', 'systemanddock')
 
 config = configparser.RawConfigParser()
 config.read('props.properties')
@@ -22,7 +23,7 @@ class LoginWindow(Screen):
         super(LoginWindow, self).__init__(**kwargs)
         Clock.schedule_interval(self.update_spinner, 1)
 
-    def update_spinner(self, interval):
+    def update_spinner(self, _):
         self.spinner_label.values = self.get_users()
 
     def get_users(self) -> list:
@@ -32,7 +33,7 @@ class LoginWindow(Screen):
         if user == "Select from Dropdown":
             return False
         correct_password = DbConnector.get_password(self, user)
-        provided_passw_encoded = Utils.string_to_base_64_string(passw)
+        provided_passw_encoded = Utils.string_to_base_64_string(self, passw)
         return True if (provided_passw_encoded == correct_password) else False
 
 
@@ -48,7 +49,7 @@ class MainPage(Screen):
     def reset_run(self):
         DbConnector.reset_raw_data(self)
 
-    def update_workout_data(self, interval):
+    def update_workout_data(self, _):
         all_data = sorted(DbConnector.get_all_workout_data(self))
         if len(all_data) > 0:
             workout_seconds = (datetime.datetime.now() - all_data[0][0]).seconds
