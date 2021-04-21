@@ -1,19 +1,14 @@
-from kivy.clock import Clock
 from kivy.config import Config
-from kivy.properties import NumericProperty, StringProperty
-
-from db_connector import DbConnector
-from utils import Utils
-
 Config.set('kivy', 'keyboard_mode', 'systemanddock')
+from kivy.clock import Clock
+from kivy.properties import NumericProperty, StringProperty
 from kivy.lang import Builder
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.app import App
-from pypika import MySQLQuery, Table, Field, Interval
-from pypika import functions as fn
+
+from db_connector import DbConnector
+from utils import Utils
 import configparser
-import base64
-import math
 import datetime
 
 config = configparser.RawConfigParser()
