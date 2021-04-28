@@ -1,32 +1,21 @@
-import mysql.connector as mysql
-from kivy.config import Config
+import sqlite3
 from pypika import functions as fn
-
-from utils import Utils
-
-Config.set('kivy', 'keyboard_mode', 'systemanddock')
 from pypika import MySQLQuery, Table, Field, Interval
+from utils import Utils
 import configparser
+import datetime
+import pytz
 
-config = configparser.RawConfigParser()
-config.read('props.properties')
-
-db_name = 'kivy_test_db'
-users_table = Table('users', schema=db_name)
-raw_data_table = Table('raw_data', schema=db_name)
+db_name = '/home/pi/rowerUI/rower.db'
+users_table = Table('users')
+raw_data_table = Table('raw_data')
 
 
 class DbConnector:
 
     def db_connector(self):
         def with_connection_(*args, **kwargs):
-            host = config.get('DatabaseSection', 'database.host')
-            user = config.get('DatabaseSection', 'database.user')
-            password = config.get('DatabaseSection', 'database.password')
-            auth = config.get('DatabaseSection', 'database.authPlugin')
-
-            cnn = mysql.connect(host=host, user=user, passwd=password,
-                                auth_plugin=auth)
+            cnn = sqlite3.connect(db_name)
             try:
                 rv = self(cnn, *args, **kwargs)
             except Exception:
@@ -42,7 +31,7 @@ class DbConnector:
 
     @db_connector
     def get_password(cnn, self, user: str) -> (str, None):
-        cur = cnn.cursor(buffered=True)
+        cur = cnn.cursor()
         q = MySQLQuery.from_(users_table).select(
             users_table.password
         ).where(
@@ -57,25 +46,25 @@ class DbConnector:
 
     @db_connector
     def reset_raw_data(cnn, self):
-        cur = cnn.cursor(buffered=True)
+        cur = cnn.cursor()
         q = MySQLQuery.from_(raw_data_table).delete()
         cur.execute(q.get_sql())
 
     @db_connector
     def get_insta_data(cnn, self):
-        cur = cnn.cursor(buffered=True)
+        cur = cnn.cursor()
         data_query = MySQLQuery.from_(raw_data_table).select(
             raw_data_table.timestamp
-        ).where(
-            raw_data_table.timestamp[fn.Now() - Interval(seconds=5):fn.Now()]
         )
-        cur.execute(data_query.get_sql())
+        
+        raw_query = data_query.get_sql() + " WHERE strftime('%s', 'now') - cast(strftime('%s', timestamp) as integer) < 4"
+        cur.execute(raw_query)
         res = cur.fetchall()
         return res
 
     @db_connector
     def get_all_raw_data(cnn, self):
-        cur = cnn.cursor(buffered=True)
+        cur = cnn.cursor()
         data_query = MySQLQuery.from_(raw_data_table).select(
             raw_data_table.timestamp
         )
@@ -85,7 +74,7 @@ class DbConnector:
 
     @db_connector
     def user_exists(cnn, self, user: str) -> bool:
-        cur = cnn.cursor(buffered=True)
+        cur = cnn.cursor()
         user_query = MySQLQuery.from_(users_table).select(
             users_table.star
         ).where(
@@ -100,7 +89,7 @@ class DbConnector:
 
     @db_connector
     def insert_user(cnn, self, user: str, passw: str) -> bool:
-        cur = cnn.cursor(buffered=True)
+        cur = cnn.cursor()
         insert_query = MySQLQuery.into(users_table) \
             .columns('name', 'password') \
             .insert(user, Utils.string_to_base_64_string(self, passw))
@@ -110,9 +99,20 @@ class DbConnector:
 
     @db_connector
     def get_users(cnn, self) -> list:
-        cur = cnn.cursor(buffered=True)
+        cur = cnn.cursor()
         q = MySQLQuery.from_(users_table).select(users_table.name)
         cur.execute(q.get_sql())
         users = cur.fetchall()
 
         return [x[0] for x in users]
+        
+    @db_connector
+    def record_wheel_rotation(cnn, self) -> bool:
+        cur = cnn.cursor()
+        tz = pytz.timezone('UTC')
+        insert_query = MySQLQuery.into(raw_data_table) \
+            .columns('timestamp') \
+            .insert(datetime.datetime.now(tz))
+        cur.execute(insert_query.get_sql())
+        
+        return True

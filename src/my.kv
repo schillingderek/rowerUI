@@ -91,6 +91,7 @@ WindowManager:
     name: "mainpage"
     total_time_label: total_time
     insta_time_per_500m_label: insta_time_per_500m
+    total_distance_bar: total_distance_bar
 
     BoxLayout:
         orientation: 'vertical'
@@ -110,15 +111,37 @@ WindowManager:
 
             MyLabel:
                 id: total_time
-                text: "0"
+                text: "0:00:00"
 
             Label:
                 text: "Total Run Time"
+        BoxLayout:
+            orientation: 'horizontal'
+            ProgressBar:
+                id: total_distance_bar
+                value: 0.25
+                min: 0
+                max: 1
+            
+            Label:
+                text: "Current Run"
+                
+        BoxLayout:
+            orientation: 'horizontal'
+            ProgressBar:
+                id: best_run_at_distance_bar
+                value: 0.33
+                min: 0
+                max: 1
+                
+            Label:
+                text: "Best Run"
 
         Button:
             text: "Reset Run"
             on_release:
                 root.reset_run()
+                total_distance_bar.value = 0.00
 
         Button:
             text: "Go Back"
