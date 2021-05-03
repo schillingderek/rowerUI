@@ -1,4 +1,9 @@
 from kivy.config import Config
+Config.set('kivy', 'keyboard_mode', 'systemanddock')
+
+from kivy.core.window import Window
+Window.fullscreen = True
+
 from kivy.clock import Clock
 from kivy.properties import NumericProperty, StringProperty
 from kivy.lang import Builder
@@ -7,13 +12,8 @@ from kivy.app import App
 
 from db_connector import DbConnector
 from utils import Utils
-import configparser
 import datetime
 import pytz
-#Config.set('kivy', 'keyboard_mode', 'systemanddock')
-
-config = configparser.RawConfigParser()
-config.read('props.properties')
 
 
 class LoginWindow(Screen):
@@ -34,8 +34,7 @@ class LoginWindow(Screen):
             return False
         correct_password = DbConnector.get_password(self, user)
         provided_passw_encoded = Utils.string_to_base_64_string(self, passw)
-        return True
-        #return True if (provided_passw_encoded == correct_password) else False
+        return True if (provided_passw_encoded == correct_password) else False
 
 
 class MainPage(Screen):
@@ -62,6 +61,8 @@ class MainPage(Screen):
             
             self.total_distance_m = Utils.calc_total_distance_m(self, len(all_data))
             self.total_distance_bar.value = 500 if self.total_distance_m >= 500 else self.total_distance_m / 500.0
+            
+            Utils.calc_stroke_rate(self, all_data)
         else:
             self.total_time = "0"
         self.total_time_label.text = self.total_time
