@@ -2,7 +2,7 @@ from kivy.config import Config
 Config.set('kivy', 'keyboard_mode', 'systemanddock')
 
 from kivy.core.window import Window
-Window.fullscreen = True
+# Window.fullscreen = True
 
 from kivy.clock import Clock
 from kivy.properties import NumericProperty, StringProperty
