@@ -3,7 +3,7 @@ import datetime
 import math
 import pytz
 
-distance_multiplier = 1.0
+distance_multiplier = 0.75
 wheel_diameter = 27
 wheel_circ_inches = math.pi * wheel_diameter * distance_multiplier
 tz = pytz.timezone('UTC')
@@ -75,5 +75,4 @@ class Utils:
         total_time_m = (total_time.seconds + total_time.microseconds / 1000000.0) / 60.0
         if total_time_m > 0.0:
             spm = stroke_count / total_time_m
-            print(spm)
             return spm

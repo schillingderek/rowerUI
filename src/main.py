@@ -41,6 +41,8 @@ class MainPage(Screen):
     total_time = StringProperty()
     insta_time_per_500m = StringProperty()
     total_distance_m = NumericProperty()
+    spm = NumericProperty()
+    avg_time_per_500m = NumericProperty()
 
     def __init__(self, **kwargs):
         super(MainPage, self).__init__(**kwargs)
@@ -62,9 +64,13 @@ class MainPage(Screen):
             self.total_distance_m = Utils.calc_total_distance_m(self, len(all_data))
             self.total_distance_bar.value = 500 if self.total_distance_m >= 500 else self.total_distance_m / 500.0
             
-            Utils.calc_stroke_rate(self, all_data)
+            self.spm = round(Utils.calc_stroke_rate(self, all_data) or 0.00, 2)
+            self.insta_spm_label.text = str(self.spm)
+
+            self.avg_time_per_500m = workout_seconds / self.total_distance_m * 500
+            self.avg_time_per_500m_label.text = str(datetime.timedelta(seconds=self.avg_time_per_500m)).split(".")[0]
         else:
-            self.total_time = "0"
+            self.total_time = "0:00:00"
         self.total_time_label.text = self.total_time
 
         instantaneous_data = DbConnector.get_insta_data(self)

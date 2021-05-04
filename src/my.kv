@@ -3,8 +3,9 @@ WindowManager:
     MainPage:
     NewUser:
 
-[MyLabel@Label]:
+[BlueLabel@Label]:
     text: ctx.text if hasattr(ctx, 'text') else ''
+    font_size:'36sp'
     color: (1,1,1,1)
     markup: True
     canvas.before:
@@ -13,6 +14,55 @@ WindowManager:
         Rectangle:
             pos: self.pos
             size: self.size
+
+[BlueLabelSmallText@Label]:
+    text: ctx.text if hasattr(ctx, 'text') else ''
+    font_size:'12sp'
+    color: (1,1,1,1)
+    markup: True
+    canvas.before:
+        Color:
+            rgba: (0.4, 0.6, 0.8 , 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+[GreyLabel@Label]:
+    text: ctx.text if hasattr(ctx, 'text') else ''
+    font_size:'36sp'
+    color: (1,1,1,1)
+    markup: True
+    canvas.before:
+        Color:
+            rgba: (0.4, 0.4, 0.4 , 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+[GreyLabelSmallText@Label]:
+    text: ctx.text if hasattr(ctx, 'text') else ''
+    font_size:'12sp'
+    color: (1,1,1,1)
+    markup: True
+    canvas.before:
+        Color:
+            rgba: (0.4, 0.4, 0.4 , 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+[BlackLabelSmallText@Label]:
+    text: ctx.text if hasattr(ctx, 'text') else ''
+    font_size:'12sp'
+    color: (1,1,1,1)
+    markup: True
+    canvas.before:
+        Color:
+            rgba: (0.0, 0.0, 0.0 , 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
 
 <LoginWindow>:
     name: "login"
@@ -28,7 +78,7 @@ WindowManager:
             AnchorLayout:
                 size_hint: (0.25, 0.75)
                 anchor_x: 'left'
-                MyLabel:
+                BlueLabel:
                     text: "User: "
 
             AnchorLayout:
@@ -39,6 +89,7 @@ WindowManager:
                     id: spin
                     background_color: (0.4, 0.6, 0.8 , 1)
                     text: "Select from Dropdown"
+                    font_size: 36
 
         BoxLayout:
             orientation: 'horizontal'
@@ -47,7 +98,7 @@ WindowManager:
             AnchorLayout:
                 size_hint: (0.25, 0.75)
                 anchor_x: 'left'
-                MyLabel:
+                BlueLabel:
                     text: "Password: "
 
 
@@ -65,33 +116,52 @@ WindowManager:
                 id: wrongPassword
                 text: ""
 
-        AnchorLayout:
-            size_hint: (1, 0.2)
-            Button:
-                text: "Submit"
-                size_hint: (0.75, 0.75)
-                on_release:
-                    wrongPassword.text = "You've entered the wrong password" if root.check_password(spin.text, passw.text) == False else ""
-                    app.root.current = "mainpage" if root.check_password(spin.text, passw.text) == True else "login"
-                    passw.text = ""
-                    root.manager.transition.direction = "left"
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: (1, 0.25)
+            AnchorLayout:
+                size_hint: (1, 0.9)
+                Button:
+                    text: "Submit"
+                    font_size: 36
+                    size_hint: (0.75, 0.75)
+                    on_release:
+                        wrongPassword.text = "You've entered the wrong password" if root.check_password(spin.text, passw.text) == False else ""
+                        app.root.current = "mainpage" if root.check_password(spin.text, passw.text) == True else "login"
+                        passw.text = ""
+                        root.manager.transition.direction = "left"
+
+            AnchorLayout:
+                size_hint: (1, 0.9)
+                Button:
+                    text: "New User"
+                    font_size: 36
+                    size_hint: (0.75, 0.75)
+                    pos_hint: {'center': (.5, .5)}
+                    on_release:
+                        passw.text = ""
+                        wrongPassword.text = ""
+                        app.root.current = "newuser"
 
         AnchorLayout:
             size_hint: (1, 0.2)
             Button:
-                text: "New User"
-                size_hint: (0.75, 0.75)
+                text: "Just Row"
+                font_size: 36
+                size_hint: (0.875, 0.75)
                 pos_hint: {'center': (.5, .5)}
                 on_release:
                     passw.text = ""
                     wrongPassword.text = ""
-                    app.root.current = "newuser"
+                    app.root.current = "mainpage"
 
 <MainPage>:
     name: "mainpage"
     total_time_label: total_time
     insta_time_per_500m_label: insta_time_per_500m
     total_distance_bar: total_distance_bar
+    insta_spm_label: spm
+    avg_time_per_500m_label: avg_time_per_500m
 
     BoxLayout:
         orientation: 'vertical'
@@ -99,55 +169,95 @@ WindowManager:
         BoxLayout:
             orientation: 'horizontal'
 
-            MyLabel:
-                id: insta_time_per_500m
-                text: "0:00:00"
+            AnchorLayout:
+                size_hint: (0.4, 1)
+                BlueLabel:
+                    id: insta_time_per_500m
+                    text: "0:00:00"
+            AnchorLayout:
+                size_hint: (0.1, 1)
+                anchor_x:'left'
+                BlueLabelSmallText:
+                    text: "/500m"
 
-            Label:
-                text: "/500m"
+            AnchorLayout:
+                size_hint: (0.4, 1)
+                GreyLabel:
+                    id: spm
+                    text: "0"
+            AnchorLayout:
+                size_hint: (0.1, 1)
+                anchor_x:'left'
+                GreyLabelSmallText:
+                    text: "spm"
+
 
         BoxLayout:
             orientation: 'horizontal'
 
-            MyLabel:
-                id: total_time
-                text: "0:00:00"
+            AnchorLayout:
+                size_hint: (0.4, 1)
+                BlueLabel:
+                    id: avg_time_per_500m
+                    text: "0:00:00"
+            AnchorLayout:
+                size_hint: (0.1, 1)
+                anchor_x:'left'
+                BlueLabelSmallText:
+                    text: "/500m avg"
 
-            Label:
-                text: "Total Run Time"
+            AnchorLayout:
+                size_hint: (0.4, 1)
+                GreyLabel:
+                    id: total_time
+                    text: "0:00:00"
+            AnchorLayout:
+                size_hint: (0.1, 1)
+                anchor_x:'left'
+                GreyLabelSmallText:
+                    text: "Total Time"
+
         BoxLayout:
             orientation: 'horizontal'
-            ProgressBar:
-                id: total_distance_bar
-                value: 0.00
-                min: 0
-                max: 1
-            
-            Label:
-                text: "Current Run"
+
+            AnchorLayout:
+                size_hint: (0.8, 1)
+                ProgressBar:
+                    id: total_distance_bar
+                    value: 0.00
+                    min: 0
+                    max: 1
+            AnchorLayout:
+                size_hint: (0.2, 1)
+                BlackLabelSmallText:
+                    text: "Current Run to 500m"
                 
+#        BoxLayout:
+#            orientation: 'horizontal'
+#            ProgressBar:
+#                id: best_run_at_distance_bar
+#                value: 0.33
+#                min: 0
+#                max: 1
+#
+#            Label:
+#                text: "Best Run"
+
         BoxLayout:
-            orientation: 'horizontal'
-            ProgressBar:
-                id: best_run_at_distance_bar
-                value: 0.33
-                min: 0
-                max: 1
-                
-            Label:
-                text: "Best Run"
+            orientation:"horizontal"
+            Button:
+                text: "Reset Run"
+                font_size: "36sp"
+                on_release:
+                    root.reset_run()
+                    total_distance_bar.value = 0.00
 
-        Button:
-            text: "Reset Run"
-            on_release:
-                root.reset_run()
-                total_distance_bar.value = 0.00
-
-        Button:
-            text: "Go Back"
-            on_release:
-                app.root.current = "login"
-                root.manager.transition.direction = "right"
+            Button:
+                text: "Back to User Select"
+                font_size: "36sp"
+                on_release:
+                    app.root.current = "login"
+                    root.manager.transition.direction = "right"
 
 
 <NewUser>:
@@ -163,7 +273,7 @@ WindowManager:
             AnchorLayout:
                 size_hint: (0.25, 0.75)
                 anchor_x: 'left'
-                MyLabel:
+                BlueLabel:
                     text: "Name: "
 
 
@@ -181,7 +291,7 @@ WindowManager:
             AnchorLayout:
                 size_hint: (0.25, 0.75)
                 anchor_x: 'left'
-                MyLabel:
+                BlueLabel:
                     text: "Password: "
 
 
