@@ -1,15 +1,16 @@
 import sqlite3
-from pypika import functions as fn
-from pypika import MySQLQuery, Table, Field, Interval
+from pypika import MySQLQuery, Table, Parameter
 from utils import Utils
-import configparser
 import datetime
 import pytz
+import os
 
-db_name = '/home/pi/rowerUI/rower.db'
+db_location = os.getcwd() + "/rower.db"
+db_name = db_location
 users_table = Table('users')
 raw_data_table = Table('raw_data')
-
+runs_table = Table('runs')
+run_data_table = Table('run_data')
 
 class DbConnector:
 
@@ -105,7 +106,7 @@ class DbConnector:
         users = cur.fetchall()
 
         return [x[0] for x in users]
-        
+
     @db_connector
     def record_wheel_rotation(cnn, self) -> bool:
         cur = cnn.cursor()
@@ -114,5 +115,72 @@ class DbConnector:
             .columns('timestamp') \
             .insert(datetime.datetime.now(tz))
         cur.execute(insert_query.get_sql())
-        
+
         return True
+
+    @db_connector
+    def save_user_run(cnn, self, target_distance, user_name, all_data):
+        user_id = DbConnector.get_user_id(self, user_name)
+        cur = cnn.cursor()
+        insert_query = MySQLQuery.into(runs_table).columns(
+            'user_id', 'target_distance_m'
+        ).insert(
+            [user_id, int(target_distance)]
+        )
+        cur.execute(insert_query.get_sql())
+        cnn.commit()
+        run_id = cur.lastrowid
+
+        insert_query2 = MySQLQuery.into(run_data_table).columns(
+            'run_id', 'distance_m', 'elapsed_time_s'
+        ).insert(
+            [Parameter('?'), Parameter('?'), Parameter('?')]
+        )
+        for i, row in enumerate(all_data):
+            params = [run_id, i*27.0, 5+i]
+            q = insert_query2.get_sql()
+            cur.execute(q, params)
+
+    @db_connector
+    def get_best_user_run(cnn, self, target_distance, user_name):
+        user_id = DbConnector.get_user_id(self, user_name)
+        cur = cnn.cursor()
+        q = """SELECT id, round((julianday(end_time) - julianday(start_time))*86400.0, 2) as elapsed_seconds
+        FROM runs
+        WHERE user_id = %d AND target_distance_m = %d
+        AND start_time IS NOT NULL
+        ORDER BY elapsed_seconds ASC
+        """
+
+        query = q % (user_id[0], target_distance)
+        cur.execute(query)
+        best_run = cur.fetchone()
+        print(best_run)
+
+    @db_connector
+    def get_user_runs_at_distance(cnn, self, target_distance, user_name, limit=999999):
+        user_id = DbConnector.get_user_id(self, user_name)
+        cur = cnn.cursor()
+        q = """SELECT id, round((julianday(end_time) - julianday(start_time))*86400.0, 2) as elapsed_seconds
+        FROM runs
+        WHERE user_id = %d AND target_distance_m = %d
+        AND start_time IS NOT NULL
+        ORDER BY elapsed_seconds ASC
+        LIMIT %d
+        """
+
+        query = q % (user_id[0], target_distance, limit)
+        cur.execute(query)
+        runs = cur.fetchall()
+        print(runs)
+
+    @db_connector
+    def get_user_id(cnn, self, user_name):
+        cur = cnn.cursor()
+        q = MySQLQuery.from_(users_table).select(users_table.id).where(
+            users_table.name == user_name
+        )
+        cur.execute(q.get_sql())
+        user_id = cur.fetchone()
+
+        return user_id
