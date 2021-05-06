@@ -35,6 +35,11 @@ class LoginWindow(Screen):
     def update_distance_select(self, user: str, distance: str):
         self.selected_distance = distance
         self.selected_user = user
+        if self.selected_distance.isnumeric() and int(self.selected_distance) > 0:
+            self.go_distance_button.disabled = False
+        else:
+            self.selected_distance = "0"
+            self.go_distance_button.disabled = True
 
     def check_password(self, user: str, passw: str) -> bool:
         if user == "Select from Dropdown":
@@ -76,15 +81,22 @@ class MainPage(Screen):
             workout_seconds = (datetime.datetime.now(tz) - workout_start).seconds
             h_m_s = str(datetime.timedelta(seconds=workout_seconds))
             self.total_time = h_m_s
-
             self.total_distance_m = Utils.calc_total_distance_m(self, len(all_data))
 
-            # if self.total_distance_m >= target_distance and not self.run_saved and not target_distance == 0 and selected_user != "":
-            #     DbConnector.save_user_run(self, target_distance, selected_user, all_data)
-            #     best = DbConnector.get_user_runs_at_distance(self, target_distance, selected_user, 1)
-            #     self.run_saved = True
+            closest_point_meters = 0
+            if workout_seconds > 0 and not target_distance == 0 and not selected_user == "" and not selected_user == "Select from Dropdown":
+                best_run = DbConnector.get_user_runs_at_distance(self, target_distance, selected_user, 1)
+                if best_run:
+                    best_run_id = best_run[0][0]
+                    closest_point = DbConnector.get_closest_point(self, best_run_id, workout_seconds)
+                    closest_point_meters = closest_point[2]
+
+            if self.total_distance_m >= target_distance and not self.run_saved and not target_distance == 0 and not selected_user == "" and not selected_user == "Select from Dropdown":
+                DbConnector.save_user_run(self, target_distance, selected_user, all_data)
+                self.run_saved = True
 
             self.total_distance_bar.value = target_distance if self.total_distance_m >= target_distance else self.total_distance_m / target_distance
+            self.best_run_bar.value = target_distance if closest_point_meters >= target_distance else closest_point_meters / target_distance
 
             self.spm = round(Utils.calc_stroke_rate(self, all_data) or 0.00, 2)
             self.insta_spm_label.text = str(self.spm)
@@ -94,8 +106,9 @@ class MainPage(Screen):
         else:
             self.total_time = "0:00:00"
         self.total_time_label.text = self.total_time
-        self.progress_bar_label.text = "Current run to " + str(target_distance) + "m\nTotal Distance: " + str(round(self.total_distance_m, 2)) + "m"
-        self.total_distance_m_label.text = str(round(self.total_distance_m, 2))
+        self.progress_bar_label.text = "Current run to " + str(round(target_distance)) + "m\nTotal Distance: " + str(
+            round(self.total_distance_m)) + "m"
+        self.total_distance_m_label.text = str(round(self.total_distance_m, 0))
 
         instantaneous_data = DbConnector.get_insta_data(self)
         if len(instantaneous_data) > 1:

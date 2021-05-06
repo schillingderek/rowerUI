@@ -104,6 +104,7 @@ WindowManager:
     name: "login"
     spinner_label: spin
     distance_select_amt: distance_select
+    go_distance_button: go_distance_button
 
     BoxLayout:
         orientation: 'vertical'
@@ -140,7 +141,6 @@ WindowManager:
                 BlueLabel:
                     text: 'Target\nMeters:'
 
-
             AnchorLayout:
                 size_hint: (0.75, 0.75)
                 padding: 2, 0, 0, 0
@@ -151,27 +151,8 @@ WindowManager:
                     text: "Select from Dropdown"
                     font_size: 36
                     values: ('500', '1000', '1500', '2000', '3000', '5000', '10000')
-
-#        AnchorLayout:
-#            size_hint: (1, 0.1)
-#            Label:
-#                id: wrongPassword
-#                text: ""
-
-#        BoxLayout:
-#            orientation: "horizontal"
-#            size_hint: (1, 0.25)
-#            AnchorLayout:
-#                size_hint: (1, 0.9)
-#                Button:
-#                    text: "Submit"
-#                    font_size: 36
-#                    size_hint: (0.75, 0.75)
-#                    on_release:
-#                        wrongPassword.text = "You've entered the wrong password" if root.check_password(spin.text, passw.text) == False else ""
-#                        app.root.current = "mainpage" if root.check_password(spin.text, passw.text) == True else "login"
-#                        passw.text = ""
-#                        root.manager.transition.direction = "left"
+                    on_text:
+                        root.update_distance_select(spin.text, distance_select.text)
 
         BoxLayout:
             orientation: "horizontal"
@@ -179,9 +160,11 @@ WindowManager:
             AnchorLayout:
                 size_hint: (0.8, 0.8)
                 Button:
+                    id: go_distance_button
                     text: "Go the Distance"
                     font_size: 36
                     size_hint: (1, 0.8)
+                    disabled: True
                     on_release:
                         root.update_distance_select(spin.text, distance_select.text)
                         app.root.current = "mainpage"
@@ -195,6 +178,10 @@ WindowManager:
                     pos_hint: {'center': (.5, .5)}
                     on_release:
                         app.root.current = "mainpage"
+                        distance_select.text = "Select from Dropdown"
+                        spin.text = "Select from Dropdown"
+                        root.update_distance_select(spin.text, "0")
+
 
         AnchorLayout:
             size_hint: (1.0, 0.25)
@@ -218,6 +205,8 @@ WindowManager:
     progress_bar_label: progress_bar_label
     main_screen_carousel_index: main_screen_carousel
     total_distance_m_label: total_distance_m
+    best_run_bar: best_run_bar
+    best_run_label: best_run_label
 
     BoxLayout:
         orientation: 'vertical'
@@ -251,7 +240,6 @@ WindowManager:
                 GreyLabelSmallText:
                     text: "spm"
 
-
         BoxLayout:
             orientation: 'horizontal'
 
@@ -281,25 +269,40 @@ WindowManager:
                 GreyLabelSmallText:
                     text: "Total Time"
 
-
-
         Carousel:
             index: 0
             id: main_screen_carousel
             BoxLayout:
-                orientation: 'horizontal'
-                AnchorLayout:
-                    size_hint: (0.8, 1)
-                    ProgressBar:
-                        id: total_distance_bar
-                        value: 0.00
-                        min: 0
-                        max: 1
-                AnchorLayout:
-                    size_hint: (0.2, 1)
-                    BlackLabelSmallText:
-                        id: progress_bar_label
-                        text: "Current Run to 500m\nTotal Distance: 0m"
+                orientation: 'vertical'
+                BoxLayout:
+                    orientation: 'horizontal'
+                    AnchorLayout:
+                        size_hint: (0.8, 1)
+                        ProgressBar:
+                            id: best_run_bar
+                            value: 0.00
+                            min: 0
+                            max: 1
+                    AnchorLayout:
+                        size_hint: (0.2, 1)
+                        BlackLabelSmallText:
+                            id: best_run_label
+                            text: "Best Run to 500m"
+
+                BoxLayout:
+                    orientation: 'horizontal'
+                    AnchorLayout:
+                        size_hint: (0.8, 1)
+                        ProgressBar:
+                            id: total_distance_bar
+                            value: 0.00
+                            min: 0
+                            max: 1
+                    AnchorLayout:
+                        size_hint: (0.2, 1)
+                        BlackLabelSmallText:
+                            id: progress_bar_label
+                            text: "Current Run to 500m\nTotal Distance: 0m"
 
             BoxLayout:
                 orientation: 'horizontal'
@@ -316,19 +319,6 @@ WindowManager:
                     BlackLabelSmallText:
                         text: "Total Meters"
 
-
-                
-#        BoxLayout:
-#            orientation: 'horizontal'
-#            ProgressBar:
-#                id: best_run_at_distance_bar
-#                value: 0.33
-#                min: 0
-#                max: 1
-#
-#            Label:
-#                text: "Best Run"
-
         BoxLayout:
             orientation:"horizontal"
             Button:
@@ -338,7 +328,7 @@ WindowManager:
                     root.reset_run()
                     total_distance_bar.value = 0.00
                     avg_time_per_500m.text = "0:00:00"
-
+                    best_run_bar.value = 0.00
 
             Button:
                 text: "Back to User Select"
@@ -364,7 +354,6 @@ WindowManager:
                 BlueLabel:
                     text: "Name: "
 
-
             AnchorLayout:
                 size_hint: (0.75, 0.75)
                 padding: 10, 0, 0, 0
@@ -375,24 +364,6 @@ WindowManager:
                     id: name
                     multiline: False
 
-#        BoxLayout:
-#            orientation: 'horizontal'
-#
-#            AnchorLayout:
-#                size_hint: (0.25, 0.75)
-#                anchor_x: 'left'
-#                BlueLabel:
-#                    text: "Password: "
-#
-#
-#            AnchorLayout:
-#                size_hint: (0.75, 0.75)
-#                padding: 10, 0, 0, 0
-#                anchor_x: 'left'
-#                TextInput:
-#                    id: passw
-#                    multiline: False
-
         AnchorLayout:
             Label:
                 id: userExists
@@ -402,13 +373,14 @@ WindowManager:
             orientation: 'horizontal'
             Button:
                 text: "Go Back"
+                font_size: 36
                 on_release:
                     app.root.current = "login"
                     root.manager.transition.direction = "right"
 
             Button:
                 text: "Submit"
-
+                font_size: 36
                 on_release:
                     if root.save_user(name.text, "") == True: app.root.current = "mainpage"
                     else: root.user_exists_error()

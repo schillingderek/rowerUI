@@ -123,9 +123,9 @@ class DbConnector:
         user_id = DbConnector.get_user_id(self, user_name)
         cur = cnn.cursor()
         insert_query = MySQLQuery.into(runs_table).columns(
-            'user_id', 'target_distance_m'
+            'user_id', 'target_distance_m', 'start_time', 'end_time'
         ).insert(
-            [user_id, int(target_distance)]
+            [user_id, int(target_distance), all_data[0][0], all_data[-1][0]]
         )
         cur.execute(insert_query.get_sql())
         cnn.commit()
@@ -136,8 +136,14 @@ class DbConnector:
         ).insert(
             [Parameter('?'), Parameter('?'), Parameter('?')]
         )
+        start_time = datetime.datetime.strptime(all_data[0][0], '%Y-%m-%dT%H:%M:%S.%f+00:00').replace(
+                tzinfo=pytz.UTC)
         for i, row in enumerate(all_data):
-            params = [run_id, i*27.0, 5+i]
+            data_point_time = datetime.datetime.strptime(row[0], '%Y-%m-%dT%H:%M:%S.%f+00:00').replace(
+                tzinfo=pytz.UTC)
+            time_diff = data_point_time - start_time
+            elapsed_time_s = time_diff.seconds + time_diff.microseconds / 1000000.0
+            params = [run_id, Utils.calc_total_distance_m(self, i), elapsed_time_s]
             q = insert_query2.get_sql()
             cur.execute(q, params)
 
@@ -172,7 +178,7 @@ class DbConnector:
         query = q % (user_id[0], target_distance, limit)
         cur.execute(query)
         runs = cur.fetchall()
-        print(runs)
+        return runs
 
     @db_connector
     def get_user_id(cnn, self, user_name):
@@ -184,3 +190,11 @@ class DbConnector:
         user_id = cur.fetchone()
 
         return user_id
+
+    @db_connector
+    def get_closest_point(cnn, self, best_run_id, workout_seconds):
+        cur = cnn.cursor()
+        q = """SELECT * FROM run_data WHERE run_id = %d ORDER BY ABS(elapsed_time_s - %f) ASC LIMIT 1;"""
+        query = q % (best_run_id, workout_seconds)
+        cur.execute(query)
+        return cur.fetchone()
