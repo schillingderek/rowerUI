@@ -3,7 +3,7 @@ import datetime
 import math
 import pytz
 
-distance_multiplier = 0.75
+distance_multiplier = 0.3
 wheel_diameter = 27
 wheel_circ_inches = math.pi * wheel_diameter * distance_multiplier
 tz = pytz.timezone('UTC')
@@ -38,7 +38,7 @@ class Utils:
         previous_time = datetime.datetime.strptime(all_data[0][0], '%Y-%m-%dT%H:%M:%S.%f+00:00').replace(
             tzinfo=pytz.UTC)
         accelerating = 0
-        bounce_time_s = 0.25
+        bounce_time_s = 0.50
         min_diff = 0.05
         now_time = datetime.datetime.now(tz)
         min_time = now_time
@@ -60,7 +60,7 @@ class Utils:
             time_delta = point_time - previous_time
             current_diff = time_delta.seconds + time_delta.microseconds / 1000000.0
             time_since_last_change = (point_time - last_change_time).seconds + (
-                        now_time - last_change_time).microseconds / 1000000.0
+                        point_time - last_change_time).microseconds / 1000000.0
             if current_diff < previous_diff and previous_diff - current_diff > min_diff:
                 if time_since_last_change > bounce_time_s and not accelerating:
                     stroke_count += 1

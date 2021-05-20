@@ -3,7 +3,7 @@ from kivy.config import Config
 Config.set('kivy', 'keyboard_mode', 'systemanddock')
 
 from kivy.core.window import Window
-# Window.fullscreen = True
+Window.fullscreen = True
 
 from kivy.clock import Clock
 from kivy.properties import NumericProperty, StringProperty, BooleanProperty
@@ -63,6 +63,7 @@ class MainPage(Screen):
 
     def reset_run(self):
         print("resetting data")
+        self.run_saved = False
         DbConnector.reset_raw_data(self)
 
     def update_workout_data(self, _):
@@ -105,6 +106,7 @@ class MainPage(Screen):
             self.avg_time_per_500m_label.text = str(datetime.timedelta(seconds=self.avg_time_per_500m)).split(".")[0]
         else:
             self.total_time = "0:00:00"
+            self.total_distance_m = 0
         self.total_time_label.text = self.total_time
         self.progress_bar_label.text = "Current run to " + str(round(target_distance)) + "m\nTotal Distance: " + str(
             round(self.total_distance_m)) + "m"
