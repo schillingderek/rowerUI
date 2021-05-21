@@ -5,7 +5,7 @@ import datetime
 import pytz
 import os
 
- # db_location = os.getcwd() + "/rower.db"
+# db_location = os.getcwd() + "/rower.db"
 db_location = "/home/pi/rowerUI/rower.db"
 db_name = db_location
 users_table = Table('users')
