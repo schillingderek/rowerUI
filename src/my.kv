@@ -99,6 +99,14 @@ WindowManager:
             pos: self.pos
             size: self.size
 
+<CustomPopup>:
+    id: pop
+    title: 'Run Complete'
+    size_hint: (0.5, 0.5)
+    auto_dismiss: True
+    Label:
+        id: popup_label
+        text: ""
 
 <LoginWindow>:
     name: "login"
@@ -326,17 +334,12 @@ WindowManager:
                 font_size: "36sp"
                 on_release:
                     root.reset_run()
-                    total_distance_bar.value = 0.00
-                    avg_time_per_500m.text = "0:00:00"
-                    best_run_bar.value = 0.00
-                    spm.text = "0.00"
-                    total_distance_m.text = "0"
-                    
 
             Button:
                 text: "Back to User Select"
                 font_size: "36sp"
                 on_release:
+                    root.reset_run()
                     app.root.current = "login"
                     root.manager.transition.direction = "right"
 

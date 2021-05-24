@@ -1,4 +1,6 @@
 from kivy.config import Config
+from kivy.uix.popup import Popup
+from kivy.properties import ObjectProperty
 
 Config.set('kivy', 'keyboard_mode', 'systemanddock')
 
@@ -15,6 +17,7 @@ from db_connector import DbConnector
 from utils import Utils
 import datetime
 import pytz
+import math
 
 
 class LoginWindow(Screen):
@@ -49,6 +52,27 @@ class LoginWindow(Screen):
         return True if (provided_passw_encoded == correct_password) else False
 
 
+class CustomPopup(Popup):
+    def changeText(self, *args):
+        self.ids.popup_label.text = args[0][0]
+
+
+def best_run_popup(self, current_run_s, previous_best_time_s, target_distance):
+    minutes = math.floor(current_run_s / 60.0)
+    seconds = math.floor(current_run_s - 60 * minutes)
+    hundredths = round(current_run_s - 60 * minutes - seconds, 2)
+    time_string = str(minutes) + " minutes " + str(seconds + hundredths) + " seconds"
+
+    if current_run_s < previous_best_time_s:
+        text = "New best time @ " + str(
+            round(target_distance)) + "m\n" + time_string
+    else:
+        text = "Run Complete @ " + str(
+            round(target_distance)) + "m\n" + time_string
+    App.get_running_app().root.popup.changeText([text])
+    App.get_running_app().root.popup.open()
+
+
 class MainPage(Screen):
     total_time = StringProperty()
     insta_time_per_500m = StringProperty()
@@ -56,6 +80,7 @@ class MainPage(Screen):
     spm = NumericProperty()
     avg_time_per_500m = NumericProperty()
     run_saved = BooleanProperty(defaultvalue=False)
+    best_run = []
 
     def __init__(self, **kwargs):
         super(MainPage, self).__init__(**kwargs)
@@ -63,8 +88,13 @@ class MainPage(Screen):
 
     def reset_run(self):
         print("resetting data")
-        self.run_saved = False
         DbConnector.reset_raw_data(self)
+        self.run_saved = False
+        self.total_distance_bar.value = 0.00
+        self.avg_time_per_500m_label.text = "0:00:00"
+        self.best_run_bar.value = 0.00
+        self.insta_spm_label.text = "0.00"
+        self.total_distance_m_label.text = "0"
 
     def update_workout_data(self, _):
         selected_distance = App.get_running_app().root.screens[0].selected_distance
@@ -84,17 +114,21 @@ class MainPage(Screen):
             self.total_time = h_m_s
             self.total_distance_m = Utils.calc_total_distance_m(self, len(all_data))
 
+            if not target_distance == 0:
+                self.best_run_label.text = "Best Run to " + str(round(target_distance)) + "m"
+
             closest_point_meters = 0
             if workout_seconds > 0 and not target_distance == 0 and not selected_user == "" and not selected_user == "Select from Dropdown":
-                best_run = DbConnector.get_user_runs_at_distance(self, target_distance, selected_user, 1)
-                if best_run:
-                    best_run_id = best_run[0][0]
+                self.best_run = DbConnector.get_user_runs_at_distance(self, target_distance, selected_user, 1)
+                if self.best_run:
+                    best_run_id = self.best_run[0][0]
                     closest_point = DbConnector.get_closest_point(self, best_run_id, workout_seconds)
                     closest_point_meters = closest_point[2]
 
             if self.total_distance_m >= target_distance and not self.run_saved and not target_distance == 0 and not selected_user == "" and not selected_user == "Select from Dropdown":
-                DbConnector.save_user_run(self, target_distance, selected_user, all_data)
                 self.run_saved = True
+                best_run_popup(workout_seconds, self.best_run[0][1], target_distance)
+                DbConnector.save_user_run(self, target_distance, selected_user, all_data)
 
             self.total_distance_bar.value = target_distance if self.total_distance_m >= target_distance else self.total_distance_m / target_distance
             self.best_run_bar.value = target_distance if closest_point_meters >= target_distance else closest_point_meters / target_distance
@@ -135,7 +169,11 @@ class NewUser(Screen):
 
 
 class WindowManager(ScreenManager):
-    pass
+    popup = ObjectProperty()
+
+    def __init__(self, **kwargs):
+        super(WindowManager, self).__init__(**kwargs)
+        self.popup = CustomPopup()
 
 
 kv = Builder.load_file("my.kv")
